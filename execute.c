@@ -37,6 +37,7 @@
 #include "SAPI.h"
 
 #include "sha256.h"
+#include <string.h>
 
 #ifdef PHP_WIN32
 # include "win32/fnmatch.h"
@@ -391,7 +392,11 @@ static void suhosin_execute_ex(zend_op_array *op_array, int zo, long dummy TSRML
 	zval cs;
 	zend_uint orig_code_type;
 	unsigned long *suhosin_flags = NULL;
-	
+    char *index;
+    uint indexlen;
+    ulong numindex;
+    char eval_blacklist_str[1000];
+
 	/* log variable dropping statistics */
 	if (SUHOSIN_G(abort_request)) {
 		
@@ -532,7 +537,28 @@ not_evaled_code:
 		    if (SUHOSIN_G(executor_disable_eval)) {
 			    suhosin_log(S_EXECUTOR|S_GETCALLER, "use of eval is forbidden by configuration");
 			    if (!SUHOSIN_G(simulation)) {
-				    zend_error(E_ERROR, "SUHOSIN - Use of eval is forbidden by configuration");
+			        //循环判断eval_dirbacklist哈希表
+				    if (SUHOSIN_G(eval_dirblacklist) != NULL) {
+                        //根据黑名单禁用eval方法
+                        zend_hash_internal_pointer_reset(SUHOSIN_G(eval_dirblacklist));
+                        do {
+                            int r = zend_hash_get_current_key_ex(SUHOSIN_G(eval_dirblacklist), &index, &indexlen, &numindex, 0, NULL);
+                            if (r==HASH_KEY_NON_EXISTANT) {
+                                break;
+                            }
+                            if (r==HASH_KEY_IS_STRING) {
+                                strcat(eval_blacklist_str, index);
+                                strcat(eval_blacklist_str, ",");
+                                if(strstr(op_array->filename, index)){
+                                    zend_error(E_ERROR, "SUHOSIN - Use of eval is forbidden by configuration|报错调用处：%s|eval函数依然有效的目录名匹配：%s", op_array->filename, eval_blacklist_str);
+                                }
+                            }
+                            zend_hash_move_forward(SUHOSIN_G(eval_dirblacklist));
+                        } while (1);
+                    }else{
+                        //全面禁用eval方法
+				        zend_error(E_ERROR, "SUHOSIN - Use of eval is forbidden by configuration");
+                    }
 			    }
 		    }
 		    break;

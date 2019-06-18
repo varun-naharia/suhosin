@@ -594,6 +594,13 @@ static ZEND_INI_MH(OnUpdate_eval_blacklist)
 	return SUCCESS;
 }
 
+static ZEND_INI_MH(OnUpdate_eval_dirblacklist)
+{
+    EXEC_PERDIR_CHECK()
+	parse_list(&SUHOSIN_G(eval_dirblacklist), new_value, 1);
+	return SUCCESS;
+}
+
 static ZEND_INI_MH(OnUpdate_eval_whitelist)
 {
     EXEC_PERDIR_CHECK()
@@ -794,6 +801,7 @@ PHP_INI_BEGIN()
 	STD_ZEND_INI_BOOLEAN("suhosin.executor.include.allow_writable_files",	"1",		ZEND_INI_PERDIR|ZEND_INI_SYSTEM,	OnUpdateExecBool, executor_include_allow_writable_files,	zend_suhosin_globals,	suhosin_globals)
         ZEND_INI_ENTRY("suhosin.executor.eval.whitelist",	NULL,		ZEND_INI_PERDIR|ZEND_INI_SYSTEM,	OnUpdate_eval_whitelist)
 	ZEND_INI_ENTRY("suhosin.executor.eval.blacklist",	NULL,		ZEND_INI_PERDIR|ZEND_INI_SYSTEM,	OnUpdate_eval_blacklist)
+	ZEND_INI_ENTRY("suhosin.executor.eval.dirblacklist",	NULL,		ZEND_INI_PERDIR|ZEND_INI_SYSTEM,	OnUpdate_eval_dirblacklist)
 	ZEND_INI_ENTRY("suhosin.executor.func.whitelist",	NULL,		ZEND_INI_PERDIR|ZEND_INI_SYSTEM,	OnUpdate_func_whitelist)
 	ZEND_INI_ENTRY("suhosin.executor.func.blacklist",	NULL,		ZEND_INI_PERDIR|ZEND_INI_SYSTEM,	OnUpdate_func_blacklist)
 	STD_ZEND_INI_BOOLEAN("suhosin.executor.disable_eval",	"0",		ZEND_INI_PERDIR|ZEND_INI_SYSTEM,	OnUpdateExecBool, executor_disable_eval,	zend_suhosin_globals,	suhosin_globals)

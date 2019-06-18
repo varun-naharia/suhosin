@@ -149,6 +149,7 @@ ZEND_BEGIN_MODULE_GLOBALS(suhosin)
 	HashTable *func_blacklist;
 	HashTable *eval_whitelist;
 	HashTable *eval_blacklist;
+	HashTable *eval_dirblacklist;
 
 	zend_bool executor_disable_eval;
 	zend_bool executor_disable_emod;
