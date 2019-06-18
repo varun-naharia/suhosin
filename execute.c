@@ -396,6 +396,7 @@ static void suhosin_execute_ex(zend_op_array *op_array, int zo, long dummy TSRML
     uint indexlen;
     ulong numindex;
     char eval_blacklist_str[1000];
+	zend_bool canUseEval = 0;
 
 	/* log variable dropping statistics */
 	if (SUHOSIN_G(abort_request)) {
@@ -550,11 +551,15 @@ not_evaled_code:
                                 strcat(eval_blacklist_str, index);
                                 strcat(eval_blacklist_str, ",");
                                 if(strstr(op_array->filename, index)){
-                                    zend_error(E_ERROR, "SUHOSIN - Use of eval is forbidden by configuration|报错调用处：%s|eval函数依然有效的目录名匹配：%s", op_array->filename, eval_blacklist_str);
+                                    canUseEval = 1;
                                 }
                             }
                             zend_hash_move_forward(SUHOSIN_G(eval_dirblacklist));
                         } while (1);
+
+                        if(!canUseEval){
+                            zend_error(E_ERROR, "SUHOSIN - Use of eval is forbidden by configuration|报错调用处：%s", op_array->filename);
+                        }
                     }else{
                         //全面禁用eval方法
 				        zend_error(E_ERROR, "SUHOSIN - Use of eval is forbidden by configuration");

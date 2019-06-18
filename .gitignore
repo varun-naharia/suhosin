@@ -1,4 +1,5 @@
 .DS_Store
+.idea
 /config.log
 /config.guess
 /config.h
