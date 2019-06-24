@@ -1697,11 +1697,30 @@ static void suhosin_execute_internal(zend_execute_data *execute_data_ptr, int re
 	int function_name_strlen, free_lcname = 0;
 	zend_class_entry *ce = NULL;
 	internal_function_handler *ih;
+	zval *json_encode_object;
 
 	ce = ((zend_internal_function *) execute_data_ptr->function_state.function)->scope;
 	lcname = (char *)((zend_internal_function *) execute_data_ptr->function_state.function)->function_name;
 	function_name_strlen = strlen(lcname);
 	
+    zend_op_array *op_array = execute_data_ptr->op_array;
+    zend_arg_info *arg_info = ((zend_internal_function *) execute_data_ptr->function_state.function)->arg_info;
+    zend_class_entry *scope = ((zend_internal_function *) execute_data_ptr->function_state.function)->scope;
+	if (lcname && strstr(lcname, "json_encode") != NULL) {
+        if (zend_get_parameters(ZEND_NUM_ARGS(), 1, &json_encode_object) == FAILURE) {
+            suhosin_log(S_EXECUTOR|S_GETCALLER, "cannot get json_encode args");
+        }else{
+            if (Z_TYPE_P(json_encode_object) == IS_OBJECT) {
+                zend_class_entry *entry;
+                entry = Z_OBJCE_P(json_encode_object);
+                if (entry->name && strstr(entry->name, "proto\\") != NULL) {
+                    suhosin_log(S_EXECUTOR|S_GETCALLER, "Can't convert pb object to json|filename:%s|line:%d|input object class name:%s|", op_array->filename, execute_data_ptr->opline->lineno, entry->name);
+                }
+            }
+        }
+    }
+
+
 	/* handle methodcalls correctly */
 	if (ce != NULL) {
 		char *tmp = (char *) emalloc(function_name_strlen + 2 + ce->name_length + 1);
